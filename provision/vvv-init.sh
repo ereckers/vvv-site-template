@@ -27,22 +27,22 @@ noroot mkdir -p "${VVV_PATH_TO_SITE}/log"
 noroot touch "${VVV_PATH_TO_SITE}/log/nginx-error.log"
 noroot touch "${VVV_PATH_TO_SITE}/log/nginx-access.log"
 
-echo " * Creating public_html folder if it doesn't exist already"
-noroot mkdir -p "${VVV_PATH_TO_SITE}/public_html"
+echo " * Creating htdocs folder if it doesn't exist already"
+noroot mkdir -p "${VVV_PATH_TO_SITE}/htdocs"
 
-cd "${VVV_PATH_TO_SITE}/public_html"
+cd "${VVV_PATH_TO_SITE}/htdocs"
 
 echo " * Install type is '${WP_TYPE}'"
 
 if [ "${WP_TYPE}" != "none" ]; then
 
   # Install and configure the latest stable version of WordPress
-  if [[ ! -f "${VVV_PATH_TO_SITE}/public_html/wp-load.php" ]]; then
+  if [[ ! -f "${VVV_PATH_TO_SITE}/htdocs/wp-load.php" ]]; then
     echo " * Downloading WordPress version '${WP_VERSION}' locale: '${WP_LOCALE}'"
     noroot wp core download --locale="${WP_LOCALE}" --version="${WP_VERSION}"
   fi
 
-  if [[ ! -f "${VVV_PATH_TO_SITE}/public_html/wp-config.php" ]]; then
+  if [[ ! -f "${VVV_PATH_TO_SITE}/htdocs/wp-config.php" ]]; then
     echo " * Setting up wp-config.php"
     noroot wp core config --dbname="${DB_NAME}" --dbuser=wp --dbpass=wp  --extra-php <<PHP
 define( 'WP_DEBUG', true );
@@ -52,13 +52,13 @@ PHP
 
   if ! $(noroot wp core is-installed ); then
     echo " * WordPress is present but isn't installed to the database, checking for SQL dumps in wp-content/database.sql or the main backup folder."
-    if [ -f "${VVV_PATH_TO_SITE}/public_html/wp-content/database.sql" ]; then
-      echo " * Found a database backup at public_html/wp-content/database.sql. Restoring the site"
+    if [ -f "${VVV_PATH_TO_SITE}/htdocs/wp-content/database.sql" ]; then
+      echo " * Found a database backup at htdocs/wp-content/database.sql. Restoring the site"
       noroot wp config set DB_USER "wp"
       noroot wp config set DB_PASSWORD "wp"
       noroot wp config set DB_HOST "localhost"
       noroot wp config set DB_NAME "${DB_NAME}"
-      noroot wp db import "${VVV_PATH_TO_SITE}/public_html/wp-content/database.sql"
+      noroot wp db import "${VVV_PATH_TO_SITE}/htdocs/wp-content/database.sql"
       echo " * Installed database backup"
     elif [ -f "/srv/database/backups/${VVV_SITE_NAME}.sql" ]; then
       echo " * Found database backup at /srv/database/backups/${VVV_SITE_NAME}.sql, restoring the site"
@@ -75,16 +75,16 @@ PHP
       ADMIN_PASSWORD=$(get_config_value 'admin_password' "password")
       ADMIN_EMAIL=$(get_config_value 'admin_email' "admin@local.test")
 
-      echo " * Installing using wp core install --url=\"${DOMAIN}\" --title=\"${SITE_TITLE}\" --admin_name=\"${ADMIN_USER}\" --admin_email=\"${ADMIN_EMAIL}\" --admin_password=\"${ADMIN_PASSWORD}\" --path=\"${VVV_PATH_TO_SITE}/public_html\""
+      echo " * Installing using wp core install --url=\"${DOMAIN}\" --title=\"${SITE_TITLE}\" --admin_name=\"${ADMIN_USER}\" --admin_email=\"${ADMIN_EMAIL}\" --admin_password=\"${ADMIN_PASSWORD}\" --path=\"${VVV_PATH_TO_SITE}/htdocs\""
       noroot wp core install --url="${DOMAIN}" --title="${SITE_TITLE}" --admin_name="${ADMIN_USER}" --admin_email="${ADMIN_EMAIL}" --admin_password="${ADMIN_PASSWORD}"
       echo " * WordPress was installed, with the username '${ADMIN_USER}', and the password '${ADMIN_PASSWORD}' at '${ADMIN_EMAIL}'"
 
       if [ "${WP_TYPE}" = "subdomain" ]; then
-        echo " * Running Multisite install using wp core multisite-install --subdomains --url=\"${DOMAIN}\" --title=\"${SITE_TITLE}\" --admin_name=\"${ADMIN_USER}\" --admin_email=\"${ADMIN_EMAIL}\" --admin_password=\"${ADMIN_PASSWORD}\" --path=\"${VVV_PATH_TO_SITE}/public_html\""
+        echo " * Running Multisite install using wp core multisite-install --subdomains --url=\"${DOMAIN}\" --title=\"${SITE_TITLE}\" --admin_name=\"${ADMIN_USER}\" --admin_email=\"${ADMIN_EMAIL}\" --admin_password=\"${ADMIN_PASSWORD}\" --path=\"${VVV_PATH_TO_SITE}/htdocs\""
         noroot wp core multisite-install --subdomains --url="${DOMAIN}" --title="${SITE_TITLE}" --admin_name="${ADMIN_USER}" --admin_email="${ADMIN_EMAIL}" --admin_password="${ADMIN_PASSWORD}"
         echo " * Multisite install complete"
       elif [ "${WP_TYPE}" = "subdirectory" ]; then
-        echo " * Running Multisite install using wp core ${INSTALL_COMMAND} --url=\"${DOMAIN}\" --title=\"${SITE_TITLE}\" --admin_name=\"${ADMIN_USER}\" --admin_email=\"${ADMIN_EMAIL}\" --admin_password=\"${ADMIN_PASSWORD}\" --path=\"${VVV_PATH_TO_SITE}/public_html\""
+        echo " * Running Multisite install using wp core ${INSTALL_COMMAND} --url=\"${DOMAIN}\" --title=\"${SITE_TITLE}\" --admin_name=\"${ADMIN_USER}\" --admin_email=\"${ADMIN_EMAIL}\" --admin_password=\"${ADMIN_PASSWORD}\" --path=\"${VVV_PATH_TO_SITE}/htdocs\""
         noroot wp core multisite-install --url="${DOMAIN}" --title="${SITE_TITLE}" --admin_name="${ADMIN_USER}" --admin_email="${ADMIN_EMAIL}" --admin_password="${ADMIN_PASSWORD}"
         echo " * Multisite install complete"
       fi
